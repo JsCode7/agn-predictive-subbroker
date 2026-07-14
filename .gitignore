@@ -1,0 +1,19 @@
+# Entornos Virtuales de Python (No subir, cada científico crea el suyo)
+venv/
+env/
+
+# Caché de Python (Archivos temporales)
+__pycache__/
+*.pyc
+*.pyo
+
+# Datos de terceros y pruebas locales
+data/usecases/
+
+# Archivos de configuración locales
+.engram/
+.env
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db

@@ -1,0 +1,7 @@
+alerce
+confluent-kafka
+apache-flink==1.17.2
+torch
+psycopg2-binary
+pandas
+tqdm

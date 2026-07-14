@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AGN Sub-Broker MVP</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="dashboard">
+        <header class="glass-panel header">
+            <h1>AGN Sub-Broker <span>Real-Time Streaming</span></h1>
+            <div class="status">
+                <div class="indicator pulse"></div>
+                <p>Kafka Stream Connected</p>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <aside class="glass-panel sidebar">
+                <h2>Active Objects</h2>
+                <ul id="object-list">
+                    <!-- Dynamic OIDs -->
+                </ul>
+            </aside>
+
+            <section class="chart-section">
+                <div class="glass-panel chart-container">
+                    <div class="chart-header">
+                        <h2 id="current-oid">Waiting for data...</h2>
+                        <div class="prediction-badge" id="prediction-badge" style="display: none;"></div>
+                    </div>
+                    <div class="canvas-wrapper" style="position: relative; height: 100%; width: 100%; min-height: 400px; overflow: hidden;">
+                        <canvas id="lightcurveChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="glass-panel metrics-container">
+                    <h2>DRW Model Metrics</h2>
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <h3>Tau (Relaxation) <br><small style="color:#8892b0; font-size:0.75rem;">[días]</small></h3>
+                            <p id="metric-tau">--</p>
+                        </div>
+                        <div class="metric-card">
+                            <h3>Sigma (Variability) <br><small style="color:#8892b0; font-size:0.75rem;">[mag / √día]</small></h3>
+                            <p id="metric-sigma">--</p>
+                        </div>
+                        <div class="metric-card">
+                            <h3>Points <br><small style="color:#8892b0; font-size:0.75rem;">[observaciones]</small></h3>
+                            <p id="metric-points">0</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+    <script src="/static/app.js?v=4"></script>
+</body>
+</html>
