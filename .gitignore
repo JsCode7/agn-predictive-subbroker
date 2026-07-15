@@ -8,7 +8,7 @@ __pycache__/
 *.pyo
 
 # Datos de terceros y pruebas locales
-data/usecases/
+data/
 
 # Archivos de configuración locales
 .engram/

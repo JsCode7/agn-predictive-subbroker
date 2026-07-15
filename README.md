@@ -6,72 +6,54 @@
 ![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C?style=flat&logo=pytorch)
 ![Kafka](https://img.shields.io/badge/Kafka-231F20?style=flat&logo=apachekafka)
 
-Un sub-broker astronómico diseñado para la ingesta, agregación en tiempo real y clasificación estocástica de **Núcleos Galácticos Activos (AGNs) vs. Estrellas Variables**. El sistema procesa alertas del *Zwicky Transient Facility* (ZTF) distribuidas por el broker ALeRCE.
+Un sub-broker astronómico diseñado para la ingesta, agregación temporal estocástica en tiempo real y clasificación de **Núcleos Galácticos Activos (AGNs) vs. Estrellas Variables** empleando algoritmos de Aprendizaje Continuo (Continuous Learning). El sistema procesa flujos de fotometría óptica del *Zwicky Transient Facility* (ZTF) distribuidas por el broker oficial ALeRCE.
 
-## 🔭 ¿Qué problema resuelve?
-Los brokers principales procesan millones de alertas genéricas. Este **Sub-Broker** actúa como un filtro especializado que:
-1. **Ingiere Fotones en Vivo:** Intercepta datos astronómicos asincrónicos.
-2. **Stateful Aggregation:** Agrupa fotones por su OID y filtro óptico (Bandas *g* y *r*) en memoria RAM.
-3. **Inferencia Termodinámica:** Aplica un modelo de caminata aleatoria amortiguada (Damped Random Walk - DRW) programado en tensores de PyTorch para extraer las variables físicas del disco de acreción del Agujero Negro ($Tau$ y $Sigma$) en milisegundos.
+## 🔭 Relevancia Científica
+Los brokers principales procesan millones de alertas genéricas. Este **Sub-Broker** actúa como un filtro topológico especializado para Astrofísica que:
+1. **Ingiere Fotones Asíncronos:** Intercepta datos astronómicos asincrónicos irregulares en múltiples bandas fotométricas.
+2. **Inferencia Termodinámica:** Aplica un modelo de **Caminata Aleatoria Amortiguada** (Damped Random Walk - DRW) parametrizado en tensores de PyTorch para inferir asintóticamente las características del disco de acreción: la variabilidad a largo plazo ($\sigma$) y el tiempo de relajación de decaimiento temporal ($\tau$).
+3. **Clasificación Estocástica Continua:** Desacoplado de heurísticas estáticas, se entrena progresivamente (Incremental Learning) utilizando Descenso de Gradiente Estocástico (SGD) empleando la entropía cruzada (`log_loss`) sobre las variables extraídas de las curvas de luz asincrónicas, contrastándolas en tiempo real contra catálogos validados de ALeRCE.
 
-## 🏗️ Arquitectura de la Solución
+## 🏗️ Arquitectura Hexagonal y de Patrones (SOLID)
+El código base sigue una estructura de Puertos y Adaptadores, garantizando resiliencia y separación total de responsabilidades.
 
-- **Message Broker:** Apache Kafka (KRaft mode) desplegado vía Docker.
-- **Microservicio & WebSockets:** `FastAPI` actúa como el consumidor de Kafka, mantiene el estado de las curvas de luz y expone un WebSocket de alta velocidad.
-- **Machine Learning Engine:** Un modelo generativo (`torch.nn.Module`) que usa el optimizador *Adam* para ajustar las curvas e inferir parámetros astrofísicos asintóticos.
-- **Frontend Asíncrono:** Una interfaz gráfica libre de dependencias (Vanilla JS + Chart.js) con mitigación de re-renderizado vía `requestAnimationFrame` y mitigación de cuellos de botella del DOM.
+- **`core/`**: Parámetros globales y esquemas estáticos de configuración.
+- **`infrastructure/`**: Comunicación transaccional con la capa externa. Contiene el consumidor asíncrono con **Backpressure** de Apache Kafka, un Gestor de Memoria en RAM por fotones transitorios (Ring Buffer y control de TTL concurrente), y un Connection Pool (`psycopg2`) vinculado a esquemas duales PostgreSQL (Historia y Estado).
+- **`domain/`**: Corazón de la inferencia. Integra el modelo PyTorch, la topología incremental del SGDClassifier y la orquestación lógica (`inference_svc.py`).
+- **`api/`**: La capa perimetral web (FastAPI) que desacopla el ecosistema WebSocket.
+- **`scripts/`**: Utilitarios heredados para recolección de minería de datos y simulaciones *Firehose*.
 
-## 📁 Estructura del Proyecto
-El código está modularizado para ser comprensible por equipos multidisciplinarios (Data Engineers y Astrofísicos):
-
-* `1_fetch_alerce_data.py`: Script para minar datos históricos de la API de ALeRCE y preparar datasets locales (`data/`).
-* `2_kafka_stream_simulator.py`: Inyecta el dataset local a Kafka a alta velocidad para pruebas de estrés y simulación.
-* `4_pytorch_drw_model.py`: La matemática pura. Modelo termodinámico de tensores en PyTorch.
-* `5_fastapi_websockets.py`: El corazón del backend. Une Kafka, PyTorch y los WebSockets web.
-* `6_live_alerce_streamer.py`: Intercepta los últimos eventos captados por el observatorio (Polling REST) y los inyecta al pipeline.
-* `7_production_firehose_bridge.py`: Plantilla de arquitectura para conectarse directamente al streaming binario oficial (Apache Avro) de ALeRCE.
-* `docker-compose.yml`: Infraestructura (Kafka + Postgres).
-* `frontend/`: Interfaz de usuario (HTML/CSS/JS).
-
-## 🚀 Instalación y Despliegue
+## 🚀 Despliegue en Entorno de Producción
 
 ### Requisitos Previos
-* Docker y Docker Compose
-* Python 3.10+
+* Docker, Docker Compose y Python 3.10+
 
-### Paso 1: Levantar la Infraestructura
+### Levantando Infraestructura Externa
 ```bash
 docker-compose up -d
 ```
+*(Incluye Apache Kafka en modo KRaft y TimescaleDB/PostgreSQL).*
 
-### Paso 2: Entorno Virtual y Dependencias
+### Inicializando Servidor de Inferencia (Backend)
+Desde la raíz del repositorio y con el entorno virtual activado (`venv`):
 ```bash
-python -m venv venv
-# Activar entorno (Windows)
-.\venv\Scripts\activate
-# Activar entorno (Linux/Mac)
-source venv/bin/activate
-
 pip install -r requirements.txt
+uvicorn api.main:app --host 0.0.0.0 --port 8000
 ```
+> 👉 **Monitor Visual:** Abre tu navegador en [http://localhost:8000/static/index.html](http://localhost:8000/static/index.html)
 
-### Paso 3: Inicializar el Backend (PyTorch + WebSockets)
+### Inyectando Data Astronómica (Firehose)
+Para simular un streaming masivo validado contra catálogo:
 ```bash
-uvicorn 5_fastapi_websockets:app --reload --host 0.0.0.0 --port 8000
+python scripts/2_kafka_stream_simulator.py
 ```
-> 👉 **Abre tu navegador en:** [http://localhost:8000/static/index.html](http://localhost:8000/static/index.html)
 
-### Paso 4: Inyectar la Luz Estelar
-En otra consola, ejecuta cualquiera de los siguientes motores:
-- **Simulación Masiva:** `python 2_kafka_stream_simulator.py`
-- **Telescopio en Vivo (Reciente):** `python 6_live_alerce_streamer.py`
-
-## 🧠 Glosario Astrofísico
-- **MJD (Modified Julian Date):** Reloj absoluto que cuenta los días continuos, esencial para matemáticas orbitales precisas.
-- **Magnitud (magpsf):** Escala logarítmica invertida de brillo (números menores implican mayor flujo lumínico).
-- **Tau [días]:** Tiempo de relajación térmica. Memoria a largo plazo de las erupciones del agujero negro. Un $Tau$ muy alto delata un Agujero Negro Supermasivo.
-- **Sigma [mag / √día]:** Razón de la variabilidad estocástica a largo plazo del disco de acreción.
-- **Bandas ZTF:** Los colores de captura. `g-band` (Verde) y `r-band` (Roja).
+## 🧠 Parámetros Físicos Extractados
+- **MJD (Modified Julian Date):** Reloj absoluto continuo.
+- **Magnitud (magpsf):** Escala logarítmica invertida de flujo lumínico.
+- **Tau [días]:** Tiempo de relajación térmica. La memoria a largo plazo de erupciones transitorias estocásticas del disco.
+- **Sigma [mag / √día]:** Razón de variabilidad estocástica a largo plazo (ruido fotométrico intrínseco).
+- **ROC-AUC & Entropía Cruzada:** Métricas de fiabilidad probabilística calculadas en el modelo clasificatorio subyacente.
 
 ## 📄 Licencia
 Este proyecto se distribuye bajo la licencia **MIT**, permitiendo a cualquier institución científica su libre modificación y uso comercial o académico.

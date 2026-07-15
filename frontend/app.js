@@ -106,6 +106,7 @@ function requestUpdateUI() {
 
 // Handle WebSocket messages
 ws.onmessage = (event) => {
+    debugger; // Added for debugging in real time
     try {
         const msg = JSON.parse(event.data);
         const data = msg.data;
